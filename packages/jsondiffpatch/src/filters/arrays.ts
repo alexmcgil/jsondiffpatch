@@ -296,6 +296,12 @@ export const patchFilter: Filter<PatchContext> = function nestedPatchFilter(
   if (nestedDelta._t !== 'a') {
     return;
   }
+  if (context.left === undefined) {
+    console.warn('context.left is undefined in nestedPatchFilter');
+    context.setResult(undefined).exit();
+    return;
+  }
+
   let index;
   let index1;
 
@@ -364,16 +370,27 @@ export const patchFilter: Filter<PatchContext> = function nestedPatchFilter(
     array.splice(insertion.index, 0, insertion.value);
   }
 
+  if (array === undefined) {
+    console.warn('array is undefined before processing modifications');
+    context.setResult(undefined).exit();
+    return;
+  }
+
   // apply modifications
   const toModifyLength = toModify.length;
   let child;
-  if (toModifyLength > 0) {
+  if (toModifyLength === 0) {
     for (index = 0; index < toModifyLength; index++) {
       const modification = toModify[index];
-      child = new PatchContext(array[modification.index], modification.delta);
-      context.push(child, modification.index);
+      if (array[modification.index] !== undefined) {
+        child = new PatchContext(array[modification.index], modification.delta);
+        context.push(child, modification.index);
+      } else {
+        console.warn(`Element at index ${modification.index} is undefined, skipping modification`);
+      }
     }
   }
+
 
   if (!context.children) {
     context.setResult(array).exit();

@@ -27,7 +27,15 @@ class Pipe<TContext extends Context<any>> {
       if (debug) {
         this.log(`filter: ${filter.filterName}`);
       }
-      filter(context);
+      try {
+        filter(context);
+      } catch (error) {
+        console.error(`Error in filter ${filter.filterName}:`, error);
+        if (typeof context === 'object') {
+          (context as any).error = error;
+        }
+        break;
+      }
       if (typeof context === 'object' && context.exiting) {
         context.exiting = false;
         break;
